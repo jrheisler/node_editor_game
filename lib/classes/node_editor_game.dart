@@ -25,7 +25,7 @@ class NodeEditorGame extends FlameGame {
 
     // Draw grid lines only on the canvas, not on the palette
     final Paint gridPaint = Paint()
-      ..color = const Color(0xFFCCCCCC)
+      ..color = const Color(0xFFCCCCCC).withOpacity(0.3)  // Set opacity to 30%
       ..strokeWidth = 1.0;
 
     // Define the canvas area, excluding the palette
