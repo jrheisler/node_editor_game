@@ -1,10 +1,10 @@
 import 'package:flame/components.dart';
 import 'package:flutter/painting.dart';
-import 'dart:math';
+import 'package:flutter/material.dart';
 
 class PaletteComponent extends PositionComponent {
   final Function(String nodeType, Offset position) onNodeSelected;
-  String lastSelectedType = ''; // Track the last selected node type
+  String? selectedArrowType; // Track the selected arrow type
 
   PaletteComponent({required this.onNodeSelected});
 
@@ -15,6 +15,7 @@ class PaletteComponent extends PositionComponent {
     // Define the padding and spacing
     const double padding = 20.0;
     const double shapeSize = 50.0;
+    const double arrowSize = 80.0; // Increased size for the arrows
     final Paint faintLinePaint = Paint()
       ..color = const Color(0xFFCCCCCC)
       ..strokeWidth = 2.0;
@@ -52,45 +53,32 @@ class PaletteComponent extends PositionComponent {
     canvas.drawCircle(Offset(50, stopY + shapeSize / 2), shapeSize / 2, stopPaint);
 
     // Pass Arrow: Green Arrow
-    final arrowPaint = Paint()..color = const Color(0xFF4CAF50);
-    canvas.drawLine(Offset(25, arrowY), Offset(75, arrowY), arrowPaint);
-    drawArrowhead(canvas, Offset(25, arrowY), Offset(75, arrowY), arrowPaint);
+    final arrowPaint = Paint()
+      ..color = selectedArrowType == 'pass_arrow' ? Colors.green.withOpacity(0.6) : Colors.green;
+    Path arrowPath = Path();
+    arrowPath.moveTo(20, arrowY + arrowSize / 2); // Start point of the arrow
+    arrowPath.lineTo(20 + arrowSize, arrowY + arrowSize / 2); // Main arrow line
+    arrowPath.lineTo(20 + arrowSize - 20, arrowY + arrowSize / 2 - 10); // Top arrowhead
+    arrowPath.moveTo(20 + arrowSize, arrowY + arrowSize / 2); // Move back to the tip
+    arrowPath.lineTo(20 + arrowSize - 20, arrowY + arrowSize / 2 + 10); // Bottom arrowhead
+    canvas.drawPath(arrowPath, arrowPaint);
 
     // Fail Arrow: Red Arrow
-    final failArrowPaint = Paint()..color = const Color(0xFFF44336);
-    canvas.drawLine(Offset(25, arrowY + padding), Offset(75, arrowY + padding), failArrowPaint);
-    drawArrowhead(canvas, Offset(25, arrowY + padding), Offset(75, arrowY + padding), failArrowPaint);
+    final failArrowPaint = Paint()
+      ..color = selectedArrowType == 'fail_arrow' ? Colors.red.withOpacity(0.6) : Colors.red;
+    Path failArrowPath = Path();
+    failArrowPath.moveTo(20, arrowY + arrowSize + padding + arrowSize / 2); // Start point of the arrow
+    failArrowPath.lineTo(20 + arrowSize, arrowY + arrowSize + padding + arrowSize / 2); // Main arrow line
+    failArrowPath.lineTo(20 + arrowSize - 20, arrowY + arrowSize + padding + arrowSize / 2 - 10); // Top arrowhead
+    failArrowPath.moveTo(20 + arrowSize, arrowY + arrowSize + padding + arrowSize / 2); // Move back to the tip
+    failArrowPath.lineTo(20 + arrowSize - 20, arrowY + arrowSize + padding + arrowSize / 2 + 10); // Bottom arrowhead
+    canvas.drawPath(failArrowPath, failArrowPaint);
   }
 
-  void drawArrowhead(Canvas canvas, Offset start, Offset end, Paint paint) {
-    final arrowLength = 10.0;
-    final arrowAngle = pi / 4; // Angle of arrowhead, 45 degrees in radians
-    final lineAngle = atan2(end.dy - start.dy, end.dx - start.dx); // Calculate the angle of the line
-
-    // Calculate the position of the arrowhead point
-    final arrowPoint = end;
-
-    // Calculate the two points for the arrowhead's base
-    final leftPoint = Offset(
-      arrowPoint.dx - arrowLength * cos(lineAngle - arrowAngle),
-      arrowPoint.dy - arrowLength * sin(lineAngle - arrowAngle),
-    );
-
-    final rightPoint = Offset(
-      arrowPoint.dx - arrowLength * cos(lineAngle + arrowAngle),
-      arrowPoint.dy - arrowLength * sin(lineAngle + arrowAngle),
-    );
-
-    // Draw the two lines to form the arrowhead
-    canvas.drawLine(arrowPoint, leftPoint, paint);
-    canvas.drawLine(arrowPoint, rightPoint, paint);
-  }
-
-  @override
   bool handleTap(Offset position) {
     const double padding = 20.0;
     const double shapeSize = 50.0;
-    final double arrowY = 4 * shapeSize + 4 * padding;
+    const double arrowSize = 80.0;
 
     // Adjust for the toolbar height
     final adjustedPosition = Offset(position.dx, position.dy - 40);
@@ -99,28 +87,42 @@ class PaletteComponent extends PositionComponent {
     final double processY = startY + shapeSize + padding;
     final double decisionY = processY + shapeSize + padding;
     final double stopY = decisionY + shapeSize + padding;
+    final double arrowY = stopY + shapeSize + padding;
 
-    // Detect taps on each shape and trigger node creation with drag
+    // Detect taps on each shape and trigger node creation or arrow drawing
     if ((adjustedPosition - Offset(50, startY + shapeSize / 2)).distance < shapeSize / 2) {
       onNodeSelected('start', adjustedPosition);
       return true;
     } else if (Rect.fromLTWH(25, processY, shapeSize, shapeSize).contains(adjustedPosition)) {
       onNodeSelected('process', adjustedPosition);
       return true;
-    } else if (Rect.fromLTWH(25, decisionY - shapeSize / 2, shapeSize, shapeSize).contains(adjustedPosition)) {
+    } else if (Rect.fromLTWH(25, decisionY, shapeSize, shapeSize).contains(adjustedPosition)) {
       onNodeSelected('decision', adjustedPosition);
       return true;
     } else if ((adjustedPosition - Offset(50, stopY + shapeSize / 2)).distance < shapeSize / 2) {
       onNodeSelected('stop', adjustedPosition);
       return true;
-    } else if (Rect.fromLTWH(25, arrowY, 50, padding).contains(adjustedPosition)) {
+    } else if (Rect.fromLTWH(20, arrowY + arrowSize / 2 - 10, arrowSize, 20).contains(adjustedPosition)) {
+      selectedArrowType = 'pass_arrow';
       onNodeSelected('pass_arrow', adjustedPosition);
       return true;
-    } else if (Rect.fromLTWH(25, arrowY + padding, 50, padding).contains(adjustedPosition)) {
+    } else if (Rect.fromLTWH(20, arrowY + arrowSize + padding + arrowSize / 2 - 10, arrowSize, 20).contains(adjustedPosition)) {
+      selectedArrowType = 'fail_arrow';
       onNodeSelected('fail_arrow', adjustedPosition);
       return true;
     }
 
     return false;
+  }
+
+  void updateSelectedArrowType(String? type) {
+    selectedArrowType = type;
+    // The component will automatically update in the next render cycle
+  }
+
+  @override
+  void update(double dt) {
+    super.update(dt);
+    // No need to manually force a redraw; it will naturally happen during the next render cycle
   }
 }

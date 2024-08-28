@@ -29,6 +29,7 @@ class NodeEditorGame extends FlameGame {
   void selectArrowType(String type) {
     selectedArrowType = type; // Store the selected arrow type
     draggingArrow = null; // Reset any ongoing arrow drag
+    palette.updateSelectedArrowType(selectedArrowType); // Update the palette
     print("Arrow type selected: $type. Please click on a node to start dragging the arrow.");
   }
 
@@ -62,6 +63,7 @@ class NodeEditorGame extends FlameGame {
         print("Arrow ended at node at position: ${draggingArrow!.endNode.position}");
         selectedArrowType = null; // Reset arrow type selection
         draggingArrow = null; // Arrow dragging is done
+        palette.updateSelectedArrowType(null); // Reset palette highlight
       }
     } else {
       // Handle node selection or dragging
@@ -111,6 +113,8 @@ class NodeEditorGame extends FlameGame {
     if (draggingArrow != null) {
       remove(draggingArrow!);
       draggingArrow = null;
+      selectedArrowType = null;
+      palette.updateSelectedArrowType(null); // Reset palette highlight
       print("Arrow drawing canceled.");
     }
   }
@@ -196,7 +200,7 @@ class NodeEditorGame extends FlameGame {
       ..strokeWidth = 1.0;
 
     // Define the canvas area, excluding the palette
-    final double paletteWidth = 100; // Assuming the palette is 100 pixels wide
+    const double paletteWidth = 100; // Assuming the palette is 100 pixels wide
     final double canvasStartX = paletteWidth; // Grid starts after the palette
     final canvasSize = size.toSize();
 
