@@ -3,6 +3,7 @@ import 'package:flutter/painting.dart';
 
 class PaletteComponent extends PositionComponent {
   final Function(String nodeType, Offset position) onNodeSelected;
+  String lastSelectedType = ''; // Track the last selected node type
 
   PaletteComponent({required this.onNodeSelected});
 
@@ -60,16 +61,20 @@ class PaletteComponent extends PositionComponent {
 
     // Detect taps on each shape and trigger node creation with drag
     if ((position - Offset(50, startY + shapeSize / 2)).distance < shapeSize / 2) {
-      onNodeSelected('start', position);
+      lastSelectedType = 'start';
+      onNodeSelected(lastSelectedType, position);
       return true;
     } else if (Rect.fromLTWH(25, processY, shapeSize, shapeSize).contains(position)) {
-      onNodeSelected('process', position);
+      lastSelectedType = 'process';
+      onNodeSelected(lastSelectedType, position);
       return true;
     } else if (Rect.fromLTWH(25, decisionY - shapeSize / 2, shapeSize, shapeSize).contains(position)) {
-      onNodeSelected('decision', position);
+      lastSelectedType = 'decision';
+      onNodeSelected(lastSelectedType, position);
       return true;
     } else if ((position - Offset(50, stopY + shapeSize / 2)).distance < shapeSize / 2) {
-      onNodeSelected('stop', position);
+      lastSelectedType = 'stop';
+      onNodeSelected(lastSelectedType, position);
       return true;
     }
     return false;

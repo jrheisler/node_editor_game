@@ -8,6 +8,7 @@ class NodeEditorGame extends FlameGame {
   SimpleNode? selectedNode;
   Vector2? lastDragPosition;
   late PaletteComponent palette;
+  double gridSize = 50.0;
 
   @override
   Future<void> onLoad() async {
@@ -23,7 +24,7 @@ class NodeEditorGame extends FlameGame {
     super.render(canvas);
 
     // Draw grid lines only on the canvas, not on the palette
-    const double gridSize = 50.0;
+
     final Paint gridPaint = Paint()
       ..color = const Color(0xFFCCCCCC)
       ..strokeWidth = 1.0;
@@ -67,12 +68,15 @@ class NodeEditorGame extends FlameGame {
     }
   }
 
+
   void handleDrag(Offset newPosition) {
     if (selectedNode != null && lastDragPosition != null) {
       final newDragPosition = Vector2(newPosition.dx, newPosition.dy);
       final delta = newDragPosition - lastDragPosition!;
       selectedNode!.position.add(delta);
       lastDragPosition = newDragPosition;
+
+      // Only snap to grid when drag ends
       print('Node dragged to: ${selectedNode!.position}');
     } else {
       print('No node is selected for dragging');
@@ -81,6 +85,7 @@ class NodeEditorGame extends FlameGame {
 
   void endDrag() {
     if (selectedNode != null) {
+      snapNodeToGrid(selectedNode!);
       print('Drag ended for node at position: ${selectedNode!.position}');
     } else {
       print('Drag ended with no node selected');
@@ -89,48 +94,67 @@ class NodeEditorGame extends FlameGame {
     lastDragPosition = null;
   }
 
+
+  void snapNodeToGrid(SimpleNode node) {
+    final double paletteWidth = 100.0;  // Assuming the palette is 100 pixels wide
+
+    // Check if the node is outside the palette area
+    if (node.position.x > paletteWidth) {
+      final double snappedX = (node.position.x / gridSize).round() * gridSize;
+      final double snappedY = (node.position.y / gridSize).round() * gridSize;
+      node.position = Vector2(snappedX, snappedY);
+      print('Node snapped to grid at position: ${node.position}');
+    } else {
+      print('Node not snapped to grid as it is within the palette area.');
+    }
+  }
+
+
+
+
   void createNode(Vector2 position, String type) {
     SimpleNode newNode;
     if (type == 'start') {
       newNode = SimpleNode(
         position: position,
-        size: Vector2(50, 50),
+        size: Vector2(gridSize, gridSize),  // This should match gridSize
         color: Colors.green,
         shape: 'circle',
       );
     } else if (type == 'process') {
       newNode = SimpleNode(
         position: position,
-        size: Vector2(50, 50),
+        size: Vector2(gridSize, gridSize),  // This should match gridSize
         color: Colors.blue,
         shape: 'square',
       );
     } else if (type == 'decision') {
       newNode = SimpleNode(
         position: position,
-        size: Vector2(50, 50),
+        size: Vector2(gridSize, gridSize),  // This should match gridSize
         color: Colors.yellow,
         shape: 'diamond',
       );
     } else if (type == 'stop') {
       newNode = SimpleNode(
         position: position,
-        size: Vector2(50, 50),
+        size: Vector2(gridSize, gridSize),  // This should match gridSize
         color: Colors.red,
         shape: 'circle',
       );
     } else {
       newNode = SimpleNode(
         position: position,
-        size: Vector2(50, 50),
+        size: Vector2(gridSize, gridSize),  // This should match gridSize
         color: Colors.red,
         shape: 'circle',
       );
     }
 
     add(newNode);
-    selectedNode = newNode;
+    selectedNode = newNode;  // Immediately set the new node as selected for dragging
     lastDragPosition = position;
     print('Node created and ready for dragging: $type');
   }
+
 }
