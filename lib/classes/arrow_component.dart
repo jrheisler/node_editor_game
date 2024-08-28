@@ -2,14 +2,17 @@ import 'package:flame/components.dart';
 import 'package:flutter/material.dart';
 import 'dart:math';
 
+import 'node.dart';
+
 class ArrowComponent extends PositionComponent {
-  Vector2 start;
-  Vector2 end;
+  SimpleNode startNode;
+  SimpleNode endNode;
   final Color color;
+  final double arrowHeadSize = 10.0;
 
   ArrowComponent({
-    required this.start,
-    required this.end,
+    required this.startNode,
+    required this.endNode,
     required this.color,
   });
 
@@ -17,38 +20,41 @@ class ArrowComponent extends PositionComponent {
   void render(Canvas canvas) {
     super.render(canvas);
 
-    final paint = Paint()
+    final Paint paint = Paint()
       ..color = color
-      ..strokeWidth = 3.0;
+      ..strokeWidth = 2.0;
 
-    // Draw the main line
+    // Calculate the current positions of the start and end nodes
+    final start = startNode.position + Vector2(startNode.size.x / 2, startNode.size.y / 2);
+    final end = endNode.position + Vector2(endNode.size.x / 2, endNode.size.y / 2);
+
+    // Draw the arrow line
     canvas.drawLine(Offset(start.x, start.y), Offset(end.x, end.y), paint);
 
+    // Calculate the angle of the line
+    final lineAngle = atan2(end.y - start.y, end.x - start.x);
+
     // Draw the arrowhead
-    drawArrowhead(canvas, start, end, paint);
+    final arrowAngle = 0.5; // Angle of the arrowhead in radians
+    final arrowPoint = Offset(end.x, end.y);
+    final arrowPath = Path()
+      ..moveTo(arrowPoint.dx, arrowPoint.dy)
+      ..lineTo(
+        arrowPoint.dx - arrowHeadSize * cos(lineAngle - arrowAngle),
+        arrowPoint.dy - arrowHeadSize * sin(lineAngle - arrowAngle),
+      )
+      ..lineTo(
+        arrowPoint.dx - arrowHeadSize * cos(lineAngle + arrowAngle),
+        arrowPoint.dy - arrowHeadSize * sin(lineAngle + arrowAngle),
+      )
+      ..close();
+
+    canvas.drawPath(arrowPath, paint);
   }
 
-  void drawArrowhead(Canvas canvas, Vector2 start, Vector2 end, Paint paint) {
-    final arrowLength = 10.0;
-    final arrowAngle = pi / 4; // Angle of arrowhead, 45 degrees in radians
-    final lineAngle = atan2(end.y - start.y, end.x - start.x); // Calculate the angle of the line
-
-    // Calculate the position of the arrowhead point
-    final arrowPoint = end;
-
-    // Calculate the two points for the arrowhead's base
-    final leftPoint = arrowPoint + Vector2(
-      -arrowLength * cos(lineAngle - arrowAngle),
-      -arrowLength * sin(lineAngle - arrowAngle),
-    );
-
-    final rightPoint = arrowPoint + Vector2(
-      -arrowLength * cos(lineAngle + arrowAngle),
-      -arrowLength * sin(lineAngle + arrowAngle),
-    );
-
-    // Draw the two lines to form the arrowhead
-    canvas.drawLine(Offset(arrowPoint.x, arrowPoint.y), Offset(leftPoint.x, leftPoint.y), paint);
-    canvas.drawLine(Offset(arrowPoint.x, arrowPoint.y), Offset(rightPoint.x, rightPoint.y), paint);
+  @override
+  void update(double dt) {
+    // No need for specific update logic if we are just rendering based on node positions
+    // The render method will automatically reflect the current positions of the nodes
   }
 }

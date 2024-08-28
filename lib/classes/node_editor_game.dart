@@ -1,9 +1,8 @@
-
 import 'package:flame/game.dart';
 import 'package:flutter/material.dart';
 import 'package:flame/components.dart';
-import 'arrow_component.dart';
 import 'node.dart';
+import 'arrow_component.dart';
 import 'palette_component.dart';
 
 class NodeEditorGame extends FlameGame {
@@ -11,13 +10,14 @@ class NodeEditorGame extends FlameGame {
   Vector2? lastDragPosition;
   ArrowComponent? draggingArrow;
   late PaletteComponent palette;
+  String? selectedArrowType;
   double gridSize = 50.0;
 
   @override
   Future<void> onLoad() async {
     palette = PaletteComponent(onNodeSelected: (String type, Offset position) {
       if (type.contains("arrow")) {
-        startArrowDrag(type);
+        selectArrowType(type);
       } else {
         createNode(position, type); // Create a new node when selected from the palette
       }
@@ -26,10 +26,10 @@ class NodeEditorGame extends FlameGame {
     add(palette);
   }
 
-  void startArrowDrag(String type) {
-    final color = type == "pass_arrow" ? Colors.green : Colors.red;
-    draggingArrow = ArrowComponent(start: Vector2.zero(), end: Vector2.zero(), color: color);
-    // We don't add the arrow to the canvas yet until it's properly placed
+  void selectArrowType(String type) {
+    selectedArrowType = type; // Store the selected arrow type
+    draggingArrow = null; // Reset any ongoing arrow drag
+    print("Arrow type selected: $type. Please click on a node to start dragging the arrow.");
   }
 
   @override
@@ -40,27 +40,78 @@ class NodeEditorGame extends FlameGame {
       return;
     }
 
-    if (draggingArrow != null) {
-      // Start arrow drawing from the first node
+    // Handle arrow dragging or node selection
+    if (selectedArrowType != null && draggingArrow == null) {
       selectedNode = findNodeAt(position);
       if (selectedNode != null) {
-        draggingArrow!.start = selectedNode!.position + Vector2(gridSize / 2, gridSize / 2);
-        draggingArrow!.end = draggingArrow!.start; // Initially, the arrow is a dot
-        add(draggingArrow!); // Now add the arrow to the canvas
-        print("Arrow started from node at position: ${draggingArrow!.start}");
-      } else if (draggingArrow!.start != draggingArrow!.end) {
-        // If the user clicks on an empty space after starting an arrow, cancel the arrow drawing
-        cancelArrowDrawing();
+        // Start dragging an arrow from the first selected node
+        final color = selectedArrowType == "pass_arrow" ? Colors.green : Colors.red;
+        draggingArrow = ArrowComponent(
+          startNode: selectedNode!,
+          endNode: selectedNode!, // Temporarily the same, will be updated when the second node is selected
+          color: color,
+        );
+        print("Arrow started from node at position: ${draggingArrow!.startNode.position}");
+      }
+    } else if (draggingArrow != null) {
+      selectedNode = findNodeAt(position);
+      if (selectedNode != null && draggingArrow!.startNode != selectedNode) {
+        // Finalize the arrow connection to the second node
+        draggingArrow!.endNode = selectedNode!;
+        add(draggingArrow!); // Add the finalized arrow to the canvas
+        print("Arrow ended at node at position: ${draggingArrow!.endNode.position}");
+        selectedArrowType = null; // Reset arrow type selection
+        draggingArrow = null; // Arrow dragging is done
       }
     } else {
-      // Handle node dragging if not dealing with an arrow
+      // Handle node selection or dragging
       selectedNode = findNodeAt(position);
       if (selectedNode != null) {
         lastDragPosition = position;
         print("Node selected for dragging at position: ${selectedNode!.position}");
       } else {
-        print("No node was selected for dragging");
+        print("No node selected.");
       }
+    }
+  }
+
+  @override
+  void handleDrag(Offset newPosition) {
+    if (draggingArrow != null) {
+      // Update the dragging arrow's end position to follow the cursor
+      draggingArrow!.endNode.position = Vector2(newPosition.dx, newPosition.dy - 40); // Adjust for toolbar height
+    } else if (selectedNode != null && lastDragPosition != null) {
+      // Dragging a node
+      final newDragPosition = Vector2(newPosition.dx, newPosition.dy - 40); // Adjust for toolbar height
+      final delta = newDragPosition - lastDragPosition!;
+      selectedNode!.position.add(delta);
+      lastDragPosition = newDragPosition;
+
+      // No need to call markNeedsPaint; the arrow will automatically update
+      print("Node dragged to: ${selectedNode!.position}");
+    } else {
+      print("No node is selected for dragging");
+    }
+  }
+
+  @override
+  void endDrag() {
+    if (draggingArrow != null) {
+      // Finalize arrow drawing without snapping the node to the grid
+      print("Arrow drawing finalized.");
+    } else if (selectedNode != null) {
+      snapNodeToGrid(selectedNode!);
+      selectedNode = null;
+      lastDragPosition = null;
+      print("Node dragging ended");
+    }
+  }
+
+  void cancelArrowDrawing() {
+    if (draggingArrow != null) {
+      remove(draggingArrow!);
+      draggingArrow = null;
+      print("Arrow drawing canceled.");
     }
   }
 
@@ -71,49 +122,6 @@ class NodeEditorGame extends FlameGame {
       }
     }
     return null;
-  }
-
-  @override
-  void handleDrag(Offset newPosition) {
-    if (draggingArrow != null && draggingArrow!.start != draggingArrow!.end) {
-      // Update the dragging arrow's end position to follow the cursor
-      draggingArrow!.end = Vector2(newPosition.dx, newPosition.dy - 40); // Adjust for toolbar height
-    } else if (selectedNode != null && lastDragPosition != null) {
-      // Dragging a node
-      final newDragPosition = Vector2(newPosition.dx, newPosition.dy - 40); // Adjust for toolbar height
-      final delta = newDragPosition - lastDragPosition!;
-      selectedNode!.position.add(delta);
-      lastDragPosition = newDragPosition;
-
-      print("Node dragged to: ${selectedNode!.position}");
-    } else {
-      print("No node is selected for dragging");
-    }
-  }
-
-  @override
-  void endDrag() {
-    if (selectedNode != null) {
-      snapNodeToGrid(selectedNode!);
-      selectedNode = null;
-      lastDragPosition = null;
-      print("Node dragging ended");
-    }
-
-    if (draggingArrow != null && draggingArrow!.start == draggingArrow!.end) {
-      // If the arrow dragging was initiated but not completed, remove the arrow
-      remove(draggingArrow!);
-      draggingArrow = null;
-      print("Arrow dragging canceled");
-    }
-  }
-
-  void cancelArrowDrawing() {
-    if (draggingArrow != null) {
-      remove(draggingArrow!);
-      draggingArrow = null;
-      print("Arrow drawing canceled by clicking on empty space.");
-    }
   }
 
   void snapNodeToGrid(SimpleNode node) {
@@ -184,12 +192,12 @@ class NodeEditorGame extends FlameGame {
 
     // Draw grid lines only on the canvas, not on the palette
     final Paint gridPaint = Paint()
-      ..color = const Color(0xFFCCCCCC).withOpacity(0.3)  // Set opacity to 30%
+      ..color = const Color(0xFFCCCCCC).withOpacity(0.3) // Set opacity to 30%
       ..strokeWidth = 1.0;
 
     // Define the canvas area, excluding the palette
-    final double paletteWidth = 100;  // Assuming the palette is 100 pixels wide
-    final double canvasStartX = paletteWidth;  // Grid starts after the palette
+    final double paletteWidth = 100; // Assuming the palette is 100 pixels wide
+    final double canvasStartX = paletteWidth; // Grid starts after the palette
     final canvasSize = size.toSize();
 
     for (double x = canvasStartX; x < canvasSize.width; x += gridSize) {
@@ -197,7 +205,8 @@ class NodeEditorGame extends FlameGame {
     }
 
     for (double y = 0; y < canvasSize.height; y += gridSize) {
-      canvas.drawLine(Offset(canvasStartX, y), Offset(canvasSize.width, y), gridPaint);
+      canvas.drawLine(
+          Offset(canvasStartX, y), Offset(canvasSize.width, y), gridPaint);
     }
   }
 
@@ -208,12 +217,11 @@ class NodeEditorGame extends FlameGame {
     for (final component in children) {
       if (component is SimpleNode) {
         snapNodeToGrid(component);
-        component.size = Vector2(gridSize, gridSize);  // Resize nodes to match grid size
+        component.size =
+            Vector2(gridSize, gridSize); // Resize nodes to match grid size
       }
     }
 
     print('Grid size updated to: $gridSize');
   }
-
-
 }
