@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flame/game.dart';
-
 import 'classes/node_editor_game.dart';
+
 
 void main() {
   final game = NodeEditorGame();

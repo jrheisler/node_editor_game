@@ -11,11 +11,35 @@ class NodeEditorGame extends FlameGame {
 
   @override
   Future<void> onLoad() async {
-    palette = PaletteComponent(onNodeSelected: (nodeType) {
-      createNode(Vector2(100, 100), nodeType);
+    palette = PaletteComponent(onNodeSelected: (String type, Offset position) {
+      createNode(Vector2(position.dx, position.dy), type);
     });
 
     add(palette);
+  }
+
+  @override
+  void render(Canvas canvas) {
+    super.render(canvas);
+
+    // Draw grid lines only on the canvas, not on the palette
+    const double gridSize = 50.0;
+    final Paint gridPaint = Paint()
+      ..color = const Color(0xFFCCCCCC)
+      ..strokeWidth = 1.0;
+
+    // Define the canvas area, excluding the palette
+    final double paletteWidth = 100;  // Assuming the palette is 100 pixels wide
+    final double canvasStartX = paletteWidth;  // Grid starts after the palette
+    final canvasSize = size.toSize();
+
+    for (double x = canvasStartX; x < canvasSize.width; x += gridSize) {
+      canvas.drawLine(Offset(x, 0), Offset(x, canvasSize.height), gridPaint);
+    }
+
+    for (double y = 0; y < canvasSize.height; y += gridSize) {
+      canvas.drawLine(Offset(canvasStartX, y), Offset(canvasSize.width, y), gridPaint);
+    }
   }
 
   void handleTap(Offset tapPosition) {
@@ -66,39 +90,47 @@ class NodeEditorGame extends FlameGame {
   }
 
   void createNode(Vector2 position, String type) {
+    SimpleNode newNode;
     if (type == 'start') {
-      final startNode = SimpleNode(
+      newNode = SimpleNode(
         position: position,
-        size: Vector2(50, 50), // Same size as on the palette
+        size: Vector2(50, 50),
         color: Colors.green,
         shape: 'circle',
       );
-      add(startNode);
     } else if (type == 'process') {
-      final processNode = SimpleNode(
+      newNode = SimpleNode(
         position: position,
-        size: Vector2(50, 50), // Same size as on the palette
+        size: Vector2(50, 50),
         color: Colors.blue,
         shape: 'square',
       );
-      add(processNode);
     } else if (type == 'decision') {
-      final decisionNode = SimpleNode(
+      newNode = SimpleNode(
         position: position,
-        size: Vector2(50, 50), // Same size as on the palette
+        size: Vector2(50, 50),
         color: Colors.yellow,
         shape: 'diamond',
       );
-      add(decisionNode);
     } else if (type == 'stop') {
-      final stopNode = SimpleNode(
+      newNode = SimpleNode(
         position: position,
-        size: Vector2(50, 50), // Same size as on the palette
+        size: Vector2(50, 50),
         color: Colors.red,
         shape: 'circle',
       );
-      add(stopNode);
+    } else {
+      newNode = SimpleNode(
+        position: position,
+        size: Vector2(50, 50),
+        color: Colors.red,
+        shape: 'circle',
+      );
     }
-  }
 
+    add(newNode);
+    selectedNode = newNode;
+    lastDragPosition = position;
+    print('Node created and ready for dragging: $type');
+  }
 }
