@@ -66,20 +66,21 @@ class NodeEditorGame extends FlameGame {
     }
 
     // Check if a node is tapped and select it for dragging
-    bool nodeSelected = false;
-    for (final component in children) {
-      if (component is SimpleNode && component.containsPoint(position)) {
-        selectedNode = component;
-        lastDragPosition = position;
-        nodeSelected = true;
-        print('Node selected for dragging at position: ${selectedNode!.position}');
-        break;
-      }
-    }
-
-    if (!nodeSelected) {
+    selectedNode = findNodeAt(position);
+    if (selectedNode != null) {
+      lastDragPosition = position;
+      print('Node selected for dragging at position: ${selectedNode!.position}');
+    } else {
       print('No node was selected for dragging');
     }
+  }
+  SimpleNode? findNodeAt(Vector2 position) {
+    for (final component in children) {
+      if (component is SimpleNode && component.containsPoint(position)) {
+        return component;
+      }
+    }
+    return null;
   }
 
   void handleDrag(Offset newPosition) {
