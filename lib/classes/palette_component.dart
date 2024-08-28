@@ -54,29 +54,29 @@ class PaletteComponent extends PositionComponent {
     const double padding = 20.0;
     const double shapeSize = 50.0;
 
+    // Adjust for the toolbar height
+    final adjustedPosition = Offset(position.dx, position.dy - 40);
+
     final double startY = padding;
     final double processY = startY + shapeSize + padding;
     final double decisionY = processY + shapeSize + padding;
     final double stopY = decisionY + shapeSize + padding;
 
     // Detect taps on each shape and trigger node creation with drag
-    if ((position - Offset(50, startY + shapeSize / 2)).distance < shapeSize / 2) {
-      lastSelectedType = 'start';
-      onNodeSelected(lastSelectedType, position);
+    if ((adjustedPosition - Offset(50, startY + shapeSize / 2)).distance < shapeSize / 2) {
+      onNodeSelected('start', adjustedPosition);
       return true;
-    } else if (Rect.fromLTWH(25, processY, shapeSize, shapeSize).contains(position)) {
-      lastSelectedType = 'process';
-      onNodeSelected(lastSelectedType, position);
+    } else if (Rect.fromLTWH(25, processY, shapeSize, shapeSize).contains(adjustedPosition)) {
+      onNodeSelected('process', adjustedPosition);
       return true;
-    } else if (Rect.fromLTWH(25, decisionY - shapeSize / 2, shapeSize, shapeSize).contains(position)) {
-      lastSelectedType = 'decision';
-      onNodeSelected(lastSelectedType, position);
+    } else if (Rect.fromLTWH(25, decisionY - shapeSize / 2, shapeSize, shapeSize).contains(adjustedPosition)) {
+      onNodeSelected('decision', adjustedPosition);
       return true;
-    } else if ((position - Offset(50, stopY + shapeSize / 2)).distance < shapeSize / 2) {
-      lastSelectedType = 'stop';
-      onNodeSelected(lastSelectedType, position);
+    } else if ((adjustedPosition - Offset(50, stopY + shapeSize / 2)).distance < shapeSize / 2) {
+      onNodeSelected('stop', adjustedPosition);
       return true;
     }
     return false;
   }
+
 }

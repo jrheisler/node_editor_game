@@ -24,7 +24,6 @@ class NodeEditorGame extends FlameGame {
     super.render(canvas);
 
     // Draw grid lines only on the canvas, not on the palette
-
     final Paint gridPaint = Paint()
       ..color = const Color(0xFFCCCCCC)
       ..strokeWidth = 1.0;
@@ -43,8 +42,23 @@ class NodeEditorGame extends FlameGame {
     }
   }
 
+  void updateGridSize(double newSize) {
+    gridSize = newSize;
+
+    // Snap all nodes to the new grid size
+    for (final component in children) {
+      if (component is SimpleNode) {
+        snapNodeToGrid(component);
+        component.size = Vector2(gridSize, gridSize);  // Resize nodes to match grid size
+      }
+    }
+
+    print('Grid size updated to: $gridSize');
+  }
+
+
   void handleTap(Offset tapPosition) {
-    final position = Vector2(tapPosition.dx, tapPosition.dy);
+    final position = Vector2(tapPosition.dx, tapPosition.dy - 40); // Adjust for toolbar height
 
     // Check if the tap is within the palette first
     if (palette.handleTap(tapPosition)) {
@@ -68,10 +82,9 @@ class NodeEditorGame extends FlameGame {
     }
   }
 
-
   void handleDrag(Offset newPosition) {
     if (selectedNode != null && lastDragPosition != null) {
-      final newDragPosition = Vector2(newPosition.dx, newPosition.dy);
+      final newDragPosition = Vector2(newPosition.dx, newPosition.dy - 40); // Adjust for toolbar height
       final delta = newDragPosition - lastDragPosition!;
       selectedNode!.position.add(delta);
       lastDragPosition = newDragPosition;
@@ -94,13 +107,13 @@ class NodeEditorGame extends FlameGame {
     lastDragPosition = null;
   }
 
-
   void snapNodeToGrid(SimpleNode node) {
     final double paletteWidth = 100.0;  // Assuming the palette is 100 pixels wide
 
     // Check if the node is outside the palette area
     if (node.position.x > paletteWidth) {
-      final double snappedX = (node.position.x / gridSize).round() * gridSize;
+      final double adjustedX = node.position.x - paletteWidth; // Adjust by the palette width
+      final double snappedX = (adjustedX / gridSize).round() * gridSize + paletteWidth;
       final double snappedY = (node.position.y / gridSize).round() * gridSize;
       node.position = Vector2(snappedX, snappedY);
       print('Node snapped to grid at position: ${node.position}');
@@ -110,42 +123,40 @@ class NodeEditorGame extends FlameGame {
   }
 
 
-
-
   void createNode(Vector2 position, String type) {
     SimpleNode newNode;
     if (type == 'start') {
       newNode = SimpleNode(
         position: position,
-        size: Vector2(gridSize, gridSize),  // This should match gridSize
+        size: Vector2(gridSize, gridSize),  // Use gridSize here
         color: Colors.green,
         shape: 'circle',
       );
     } else if (type == 'process') {
       newNode = SimpleNode(
         position: position,
-        size: Vector2(gridSize, gridSize),  // This should match gridSize
+        size: Vector2(gridSize, gridSize),  // Use gridSize here
         color: Colors.blue,
         shape: 'square',
       );
     } else if (type == 'decision') {
       newNode = SimpleNode(
         position: position,
-        size: Vector2(gridSize, gridSize),  // This should match gridSize
+        size: Vector2(gridSize, gridSize),  // Use gridSize here
         color: Colors.yellow,
         shape: 'diamond',
       );
     } else if (type == 'stop') {
       newNode = SimpleNode(
         position: position,
-        size: Vector2(gridSize, gridSize),  // This should match gridSize
+        size: Vector2(gridSize, gridSize),  // Use gridSize here
         color: Colors.red,
         shape: 'circle',
       );
     } else {
       newNode = SimpleNode(
         position: position,
-        size: Vector2(gridSize, gridSize),  // This should match gridSize
+        size: Vector2(gridSize, gridSize),  // Use gridSize here
         color: Colors.red,
         shape: 'circle',
       );
@@ -156,5 +167,4 @@ class NodeEditorGame extends FlameGame {
     lastDragPosition = position;
     print('Node created and ready for dragging: $type');
   }
-
 }
