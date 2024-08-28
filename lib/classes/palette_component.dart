@@ -1,6 +1,5 @@
 import 'package:flame/components.dart';
 import 'package:flutter/painting.dart';
-
 class PaletteComponent extends PositionComponent {
   final Function(String nodeType, Offset position) onNodeSelected;
   String lastSelectedType = ''; // Track the last selected node type
@@ -18,7 +17,7 @@ class PaletteComponent extends PositionComponent {
       ..color = const Color(0xFFCCCCCC)
       ..strokeWidth = 2.0;
 
-    // Draw the separating line
+    // Draw the separating line to define the palette area
     canvas.drawLine(Offset(100, 0), Offset(100, size.y), faintLinePaint);
 
     // Calculate positions for each node
@@ -78,5 +77,4 @@ class PaletteComponent extends PositionComponent {
     }
     return false;
   }
-
 }
