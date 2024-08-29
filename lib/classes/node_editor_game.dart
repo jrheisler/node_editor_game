@@ -153,6 +153,7 @@ class NodeEditorGame extends FlameGame {
         size: Vector2(gridSize, gridSize), // Use gridSize here
         color: Colors.green,
         shape: "circle",
+        editorGame: this,
       );
     } else if (type == "process") {
       newNode = SimpleNode(
@@ -160,6 +161,7 @@ class NodeEditorGame extends FlameGame {
         size: Vector2(gridSize, gridSize), // Use gridSize here
         color: Colors.blue,
         shape: "square",
+        editorGame: this,
       );
     } else if (type == "decision") {
       newNode = SimpleNode(
@@ -167,6 +169,7 @@ class NodeEditorGame extends FlameGame {
         size: Vector2(gridSize, gridSize), // Use gridSize here
         color: Colors.yellow,
         shape: "diamond",
+        editorGame: this,
       );
     } else if (type == "stop") {
       newNode = SimpleNode(
@@ -174,6 +177,7 @@ class NodeEditorGame extends FlameGame {
         size: Vector2(gridSize, gridSize), // Use gridSize here
         color: Colors.red,
         shape: "circle",
+        editorGame: this,
       );
     } else {
       newNode = SimpleNode(
@@ -181,6 +185,7 @@ class NodeEditorGame extends FlameGame {
         size: Vector2(gridSize, gridSize), // Use gridSize here
         color: Colors.red,
         shape: "circle",
+        editorGame: this,
       );
     }
 
@@ -228,4 +233,6 @@ class NodeEditorGame extends FlameGame {
 
     print('Grid size updated to: $gridSize');
   }
+
+
 }

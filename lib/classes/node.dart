@@ -1,16 +1,22 @@
 import 'package:flame/components.dart';
+import 'package:flutter/material.dart';
 import 'package:flutter/painting.dart';
 import 'package:flutter/widgets.dart';
+import 'package:node_editor_game/classes/node_editor_game.dart';
+
+import 'arrow_component.dart';
 
 class SimpleNode extends PositionComponent {
   final Color color;
-  final String shape; // This can be 'circle', 'square', 'diamond'
+  final String shape;
+  NodeEditorGame editorGame;// This can be 'circle', 'square', 'diamond'
 
   SimpleNode({
     required Vector2 position,
     required Vector2 size,
     required this.color,
     required this.shape,
+    required this.editorGame,
   }) : super(position: position, size: size) {
     // Debug: Print node creation details
     print('SimpleNode created at position: $position with size: $size and shape: $shape');
@@ -42,5 +48,28 @@ class SimpleNode extends PositionComponent {
     final contains = nodeRect.contains(Offset(point.x, point.y));
     print('Checking if point $point is within node bounds $nodeRect: $contains');
     return contains;
+  }
+
+
+  void delete() {
+    // Delete any arrows connected to this node
+    deleteAttachedArrows();
+    // Remove this node from the editor's list of nodes
+    editorGame.children.remove(this); // Directly remove the node from the children list
+    print('Node deleted.');
+  }
+
+  // Method to delete arrows connected to this node
+  void deleteAttachedArrows() {
+    // Find and delete arrows attached to this node
+    List<ArrowComponent> arrows = editorGame.children.whereType<ArrowComponent>().toList();
+
+    final arrowsToRemove = arrows.where((arrow) =>
+    arrow.startNode == this || arrow.endNode == this).toList();
+
+    for (final arrow in arrowsToRemove) {
+      editorGame.children.remove(arrow); // Directly remove the arrow from the children list
+      print('Arrow connected to this node deleted.');
+    }
   }
 }
