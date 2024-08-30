@@ -9,13 +9,15 @@ import 'arrow_component.dart';
 class SimpleNode extends PositionComponent {
   final Color color;
   final String shape;
-  NodeEditorGame editorGame;// This can be 'circle', 'square', 'diamond'
+  final String uuid;
+  NodeEditorGame editorGame;
 
   SimpleNode({
     required Vector2 position,
     required Vector2 size,
     required this.color,
     required this.shape,
+    required this.uuid,
     required this.editorGame,
   }) : super(position: position, size: size) {
     // Debug: Print node creation details

@@ -1,6 +1,11 @@
+import 'dart:convert';
+
 import 'package:flame/game.dart';
 import 'package:flutter/material.dart';
 import 'package:flame/components.dart';
+import 'package:node_editor_game/models/process_model.dart';
+import 'package:uuid/uuid.dart';
+import '../models/state_model.dart';
 import 'node.dart';
 import 'arrow_component.dart';
 import 'palette_component.dart';
@@ -12,6 +17,122 @@ class NodeEditorGame extends FlameGame {
   late PaletteComponent palette;
   String? selectedArrowType;
   double gridSize = 50.0;
+  List<ProcessData> processes = [];
+  List<SimpleNode> nodes = [];
+  List<ArrowComponent> arrows = [];
+
+  NodeEditorState captureCurrentState() {
+    List<SimpleNodeState> nodesState = children.whereType<SimpleNode>().map((node) {
+      return SimpleNodeState(
+        color: node.color,
+        shape: node.shape,
+        uuid: node.uuid,
+        position: node.position,
+        size: node.size,
+      );
+    }).toList();
+
+    List<ArrowComponentState> arrowsState = children.whereType<ArrowComponent>().map((arrow) {
+      return ArrowComponentState(
+        startNodeUuid: arrow.startNode.uuid,
+        endNodeUuid: arrow.endNode.uuid,
+        color: arrow.color,
+      );
+    }).toList();
+
+    NodeEditorState state = NodeEditorState(
+      nodes: nodesState,
+      arrows: arrowsState,
+      selectedArrowType: selectedArrowType,
+      gridSize: gridSize,
+      selectedNodeUuid: selectedNode?.uuid,
+      lastDragPosition: lastDragPosition,
+      processes: processes,
+    );
+
+    return state;
+  }
+
+  // Export the current state to a JSON string
+  String exportNodeEditorState() {
+    NodeEditorState currentState = captureCurrentState();
+    return currentState.toJson().toString();
+  }
+
+  // Restore the node editor state from a JSON string
+  void restoreNodeEditorState(String jsonString) {
+    // Convert the JSON string to a map
+    Map<String, dynamic> stateJson = Map<String, dynamic>.from(jsonDecode(jsonString));
+
+    // Use the fromJson factory constructor to create a NodeEditorState instance
+    NodeEditorState restoredState = NodeEditorState.fromJson(stateJson);
+
+    // Clear current nodes and arrows
+    children.removeWhere((component) => component is SimpleNode || component is ArrowComponent);
+
+    // Rebuild nodes
+    for (var nodeState in restoredState.nodes) {
+      SimpleNode newNode = SimpleNode(
+        color: nodeState.color,
+        shape: nodeState.shape,
+        uuid: nodeState.uuid,
+        position: nodeState.position,
+        size: nodeState.size,
+        editorGame: this,
+      );
+      add(newNode);
+    }
+
+    // Rebuild arrows
+    for (var arrowState in restoredState.arrows) {
+      SimpleNode startNode = children.whereType<SimpleNode>().firstWhere((node) => node.uuid == arrowState.startNodeUuid);
+      SimpleNode endNode = children.whereType<SimpleNode>().firstWhere((node) => node.uuid == arrowState.endNodeUuid);
+
+      ArrowComponent newArrow = ArrowComponent(
+        startNode: startNode,
+        endNode: endNode,
+        color: arrowState.color,
+      );
+      add(newArrow);
+    }
+
+    // Restore other properties
+    selectedArrowType = restoredState.selectedArrowType;
+    gridSize = restoredState.gridSize;
+
+    try {
+      selectedNode = children.whereType<SimpleNode>().firstWhere(
+            (node) => node.uuid == restoredState.selectedNodeUuid,
+      );
+    } catch (e) {
+      selectedNode = null;
+    }
+
+    lastDragPosition = restoredState.lastDragPosition;
+    processes = restoredState.processes;
+
+    // Update the UI or canvas to reflect the restored state
+    updateCanvas();
+  }
+  // Example function to update the canvas
+  void updateCanvas() {
+    // Force a full update in the next game loop
+    for (final component in children) {
+      component.removeFromParent();
+      add(component);
+    }
+  }
+
+  // You would also implement functions like saveToLocalStorage and loadFromLocalStorage
+  void saveEditorStateToLocalStorage() {
+    String exportedState = exportNodeEditorState();
+    // Save the exportedState string to local storage or a file
+  }
+
+  void loadEditorStateFromLocalStorage() {
+    String jsonString = ""; // Load the JSON string from local storage or a file
+    restoreNodeEditorState(jsonString);
+  }
 
   @override
   Future<void> onLoad() async {
@@ -19,7 +140,8 @@ class NodeEditorGame extends FlameGame {
       if (type.contains("arrow")) {
         selectArrowType(type);
       } else {
-        createNode(position, type); // Create a new node when selected from the palette
+        createNode(
+            position, type); // Create a new node when selected from the palette
       }
     });
 
@@ -30,12 +152,14 @@ class NodeEditorGame extends FlameGame {
     selectedArrowType = type; // Store the selected arrow type
     draggingArrow = null; // Reset any ongoing arrow drag
     palette.updateSelectedArrowType(selectedArrowType); // Update the palette
-    print("Arrow type selected: $type. Please click on a node to start dragging the arrow.");
+    print(
+        "Arrow type selected: $type. Please click on a node to start dragging the arrow.");
   }
 
   @override
   void handleTap(Offset tapPosition) {
-    final position = Vector2(tapPosition.dx, tapPosition.dy - 40); // Adjust for toolbar height
+    final position = Vector2(
+        tapPosition.dx, tapPosition.dy - 40); // Adjust for toolbar height
 
     if (palette.handleTap(tapPosition)) {
       return;
@@ -46,13 +170,16 @@ class NodeEditorGame extends FlameGame {
       selectedNode = findNodeAt(position);
       if (selectedNode != null) {
         // Start dragging an arrow from the first selected node
-        final color = selectedArrowType == "pass_arrow" ? Colors.green : Colors.red;
+        final color = selectedArrowType == "pass_arrow" ? Colors.green : Colors
+            .red;
         draggingArrow = ArrowComponent(
           startNode: selectedNode!,
-          endNode: selectedNode!, // Temporarily the same, will be updated when the second node is selected
+          endNode: selectedNode!,
+          // Temporarily the same, will be updated when the second node is selected
           color: color,
         );
-        print("Arrow started from node at position: ${draggingArrow!.startNode.position}");
+        print("Arrow started from node at position: ${draggingArrow!.startNode
+            .position}");
       }
     } else if (draggingArrow != null) {
       selectedNode = findNodeAt(position);
@@ -60,7 +187,8 @@ class NodeEditorGame extends FlameGame {
         // Finalize the arrow connection to the second node
         draggingArrow!.endNode = selectedNode!;
         add(draggingArrow!); // Add the finalized arrow to the canvas
-        print("Arrow ended at node at position: ${draggingArrow!.endNode.position}");
+        print("Arrow ended at node at position: ${draggingArrow!.endNode
+            .position}");
         selectedArrowType = null; // Reset arrow type selection
         draggingArrow = null; // Arrow dragging is done
         palette.updateSelectedArrowType(null); // Reset palette highlight
@@ -70,7 +198,8 @@ class NodeEditorGame extends FlameGame {
       selectedNode = findNodeAt(position);
       if (selectedNode != null) {
         lastDragPosition = position;
-        print("Node selected for dragging at position: ${selectedNode!.position}");
+        print("Node selected for dragging at position: ${selectedNode!
+            .position}");
       } else {
         print("No node selected.");
       }
@@ -81,10 +210,12 @@ class NodeEditorGame extends FlameGame {
   void handleDrag(Offset newPosition) {
     if (draggingArrow != null) {
       // Update the dragging arrow's end position to follow the cursor
-      draggingArrow!.endNode.position = Vector2(newPosition.dx, newPosition.dy - 40); // Adjust for toolbar height
+      draggingArrow!.endNode.position = Vector2(
+          newPosition.dx, newPosition.dy - 40); // Adjust for toolbar height
     } else if (selectedNode != null && lastDragPosition != null) {
       // Dragging a node
-      final newDragPosition = Vector2(newPosition.dx, newPosition.dy - 40); // Adjust for toolbar height
+      final newDragPosition = Vector2(
+          newPosition.dx, newPosition.dy - 40); // Adjust for toolbar height
       final delta = newDragPosition - lastDragPosition!;
       selectedNode!.position.add(delta);
       lastDragPosition = newDragPosition;
@@ -133,8 +264,10 @@ class NodeEditorGame extends FlameGame {
 
     // Check if the node is outside the palette area
     if (node.position.x > paletteWidth) {
-      final double adjustedX = node.position.x - paletteWidth; // Adjust by the palette width
-      final double snappedX = (adjustedX / gridSize).round() * gridSize + paletteWidth;
+      final double adjustedX = node.position.x -
+          paletteWidth; // Adjust by the palette width
+      final double snappedX = (adjustedX / gridSize).round() * gridSize +
+          paletteWidth;
       final double snappedY = (node.position.y / gridSize).round() * gridSize;
       node.position = Vector2(snappedX, snappedY);
       print("Node snapped to grid at position: ${node.position}");
@@ -144,53 +277,65 @@ class NodeEditorGame extends FlameGame {
   }
 
   void createNode(Offset position, String type) {
-    Vector2 nodePosition = Vector2(position.dx, position.dy - 40); // Adjust for toolbar height
+    Vector2 nodePosition = Vector2(
+        position.dx, position.dy - 40); // Adjust for toolbar height
     SimpleNode newNode;
 
     if (type == "start") {
       newNode = SimpleNode(
         position: nodePosition,
-        size: Vector2(gridSize, gridSize), // Use gridSize here
+        size: Vector2(gridSize, gridSize),
+        // Use gridSize here
         color: Colors.green,
         shape: "circle",
         editorGame: this,
+        uuid: const Uuid().v4(),
       );
     } else if (type == "process") {
       newNode = SimpleNode(
         position: nodePosition,
-        size: Vector2(gridSize, gridSize), // Use gridSize here
+        size: Vector2(gridSize, gridSize),
+        // Use gridSize here
         color: Colors.blue,
         shape: "square",
         editorGame: this,
+        uuid: const Uuid().v4(),
       );
     } else if (type == "decision") {
       newNode = SimpleNode(
         position: nodePosition,
-        size: Vector2(gridSize, gridSize), // Use gridSize here
+        size: Vector2(gridSize, gridSize),
+        // Use gridSize here
         color: Colors.yellow,
         shape: "diamond",
         editorGame: this,
+        uuid: const Uuid().v4(),
       );
     } else if (type == "stop") {
       newNode = SimpleNode(
         position: nodePosition,
-        size: Vector2(gridSize, gridSize), // Use gridSize here
+        size: Vector2(gridSize, gridSize),
+        // Use gridSize here
         color: Colors.red,
         shape: "circle",
         editorGame: this,
+        uuid: const Uuid().v4(),
       );
     } else {
       newNode = SimpleNode(
         position: nodePosition,
-        size: Vector2(gridSize, gridSize), // Use gridSize here
+        size: Vector2(gridSize, gridSize),
+        // Use gridSize here
         color: Colors.red,
         shape: "circle",
         editorGame: this,
+        uuid: const Uuid().v4(),
       );
     }
 
     add(newNode);
-    selectedNode = newNode; // Immediately set the new node as selected for dragging
+    selectedNode =
+        newNode; // Immediately set the new node as selected for dragging
     lastDragPosition = nodePosition;
     print("Node created and ready for dragging: $type");
   }

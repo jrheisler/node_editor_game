@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flame/game.dart';
+import 'package:uuid/uuid.dart';
 import 'classes/node.dart';
 import 'classes/node_editor_game.dart';
+import 'models/process_model.dart';
 
 void main() {
   runApp(NodeEditorApp());
@@ -16,6 +18,7 @@ class _NodeEditorAppState extends State<NodeEditorApp> {
   final NodeEditorGame game = NodeEditorGame();
   bool isDialogVisible = false;
   late SimpleNode chosenNode;
+  late ProcessData chosenProcess;
 
   @override
   void initState() {
@@ -27,7 +30,9 @@ class _NodeEditorAppState extends State<NodeEditorApp> {
       color: Colors.transparent,
       shape: "circle",
       editorGame: game,
+      uuid: const Uuid().v4(),
     );
+    chosenProcess = ProcessData(id: chosenNode.uuid);
   }
 
   @override
@@ -86,12 +91,19 @@ class _NodeEditorAppState extends State<NodeEditorApp> {
                   final position = Vector2(
                       details.localPosition.dx, details.localPosition.dy);
                   // Check if a node was double-tapped
+
                   for (final component in game.children) {
                     if (component is SimpleNode &&
                         component.containsPoint(position)) {
                       isDialogVisible = true;
+                      //print('97 ${component.uuid}');
+
+                      chosenProcess = game.processes.firstWhere(
+                            (process) => process.id == component.uuid,
+                        orElse: () => ProcessData(id: component.uuid, name: "Unknown Process"),
+                      );
+
                       chosenNode = component;
-                      //component.showNodeDialog(context); // Show the dialog for the node
                       break;
                     }
                   }
@@ -111,18 +123,19 @@ class _NodeEditorAppState extends State<NodeEditorApp> {
                             decoration:
                                 const InputDecoration(labelText: 'Name'),
                             onChanged: (value) {
-                              //name = value;
+                              chosenProcess.name = value;
                             },
-                            controller: TextEditingController(text: 'name'),
+                            controller: TextEditingController(
+                                text: '${chosenProcess.name}'),
                           ),
                           TextField(
                             decoration:
                                 const InputDecoration(labelText: 'Description'),
                             onChanged: (value) {
-                              //description = value;
+                              chosenProcess.desc = value;
                             },
-                            controller:
-                                TextEditingController(text: 'description'),
+                            controller: TextEditingController(
+                                text: '${chosenProcess.desc}'),
                           ),
                           const SizedBox(
                             height: 40,
@@ -147,6 +160,27 @@ class _NodeEditorAppState extends State<NodeEditorApp> {
                             });
                           },
                           child: const Text('Delete Attached Arrows'),
+                        ),
+                        TextButton(
+                          onPressed: () {
+                            setState(() {
+                              int index = game.processes.indexWhere((process) => process.id == chosenProcess.id);
+
+                              if (index != -1) {
+                                // Replace the object at the found index
+                                game.processes[index] = chosenProcess;
+                                //print('Process replaced successfully.');
+                              } else {
+                                //print('${chosenProcess.id}');
+                                //game.processes.forEach((element) => print(element.id));
+                                game.processes.add(chosenProcess);
+                                //print('Process not found.');
+                              }
+
+                              isDialogVisible = false;
+                            });
+                          },
+                          child: const Text('Save'),
                         ),
                         TextButton(
                           onPressed: () {
