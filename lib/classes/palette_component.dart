@@ -4,9 +4,15 @@ import 'package:flutter/material.dart';
 
 class PaletteComponent extends PositionComponent {
   final Function(String nodeType, Offset position) onNodeSelected;
-  String? selectedArrowType; // Track the selected arrow type
+  final VoidCallback onExport;
+  final VoidCallback onImport;
+  String? selectedArrowType;
 
-  PaletteComponent({required this.onNodeSelected});
+  PaletteComponent({
+    required this.onNodeSelected,
+    required this.onExport,
+    required this.onImport,
+  });
 
   @override
   void render(Canvas canvas) {
@@ -21,7 +27,7 @@ class PaletteComponent extends PositionComponent {
       ..strokeWidth = 2.0;
 
     // Draw the separating line to define the palette area
-    canvas.drawLine(Offset(100, 0), Offset(100, size.y), faintLinePaint);
+    canvas.drawLine(const Offset(100, 0), Offset(100, size.y), faintLinePaint);
 
     // Calculate positions for each node
     final double startY = padding;
@@ -73,6 +79,23 @@ class PaletteComponent extends PositionComponent {
     failArrowPath.moveTo(20 + arrowSize, arrowY + arrowSize + padding + arrowSize / 2); // Move back to the tip
     failArrowPath.lineTo(20 + arrowSize - 20, arrowY + arrowSize + padding + arrowSize / 2 + 10); // Bottom arrowhead
     canvas.drawPath(failArrowPath, failArrowPaint);
+    // Render Export and Import buttons
+    TextPainter textPainter = TextPainter(
+      text: const TextSpan(
+        text: 'Export',
+        style: TextStyle(color: Color(0xFFCCCCCC), fontSize: 16),
+      ),
+      textDirection: TextDirection.ltr,
+    );
+    textPainter.layout();
+    textPainter.paint(canvas, Offset(25, arrowY + arrowSize + 2 * padding));
+
+    textPainter.text = const TextSpan(
+      text: 'Import',
+      style: TextStyle(color: Color(0xFFCCCCCC), fontSize: 16),
+    );
+    textPainter.layout();
+    textPainter.paint(canvas, Offset(25, arrowY + arrowSize + 3 * padding));
   }
 
   bool handleTap(Offset position) {
@@ -109,6 +132,12 @@ class PaletteComponent extends PositionComponent {
     } else if (Rect.fromLTWH(20, arrowY + arrowSize + padding + arrowSize / 2 - 10, arrowSize, 20).contains(adjustedPosition)) {
       selectedArrowType = 'fail_arrow';
       onNodeSelected('fail_arrow', adjustedPosition);
+      return true;
+    } else if (Rect.fromLTWH(25, arrowY + arrowSize + 2 * padding, 50, 20).contains(adjustedPosition)) {
+      onExport();
+      return true;
+    } else if (Rect.fromLTWH(25, arrowY + arrowSize + 3 * padding, 50, 20).contains(adjustedPosition)) {
+      onImport();
       return true;
     }
 

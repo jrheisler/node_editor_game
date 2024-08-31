@@ -19,7 +19,22 @@ class NodeEditorGame extends FlameGame {
   List<ProcessData> processes = [];
   List<SimpleNode> nodes = [];
   List<ArrowComponent> arrows = [];
+  String? _savedState; // In-memory storage for demonstration purposes
 
+  void saveEditorStateToLocalStorage() {
+    String exportedState = exportNodeEditorState();
+    _savedState = exportedState; // Save the state to a string variable
+    print('State saved.');
+  }
+
+  void loadEditorStateFromLocalStorage() {
+    if (_savedState != null) {
+      restoreNodeEditorState(_savedState!);
+      print('State restored.');
+    } else {
+      print('No saved state to load.');
+    }
+  }
   NodeEditorState captureCurrentState() {
     List<SimpleNodeState> nodesState = children.whereType<SimpleNode>().map((node) {
       return SimpleNodeState(
@@ -122,30 +137,27 @@ class NodeEditorGame extends FlameGame {
     }
   }
 
-  // You would also implement functions like saveToLocalStorage and loadFromLocalStorage
-  void saveEditorStateToLocalStorage() {
-    String exportedState = exportNodeEditorState();
-    // Save the exportedState string to local storage or a file
-  }
-
-  void loadEditorStateFromLocalStorage() {
-    String jsonString = ""; // Load the JSON string from local storage or a file
-    restoreNodeEditorState(jsonString);
-  }
-
   @override
   Future<void> onLoad() async {
-    palette = PaletteComponent(onNodeSelected: (String type, Offset position) {
-      if (type.contains("arrow")) {
-        selectArrowType(type);
-      } else {
-        createNode(
-            position, type); // Create a new node when selected from the palette
-      }
-    });
+    palette = PaletteComponent(
+      onNodeSelected: (String type, Offset position) {
+        if (type.contains("arrow")) {
+          selectArrowType(type);
+        } else {
+          createNode(position, type); // Create a new node when selected from the palette
+        }
+      },
+      onExport: () {
+        saveEditorStateToLocalStorage();
+      },
+      onImport: () {
+        loadEditorStateFromLocalStorage();
+      },
+    );
 
     add(palette);
   }
+
 
   void selectArrowType(String type) {
     selectedArrowType = type; // Store the selected arrow type
