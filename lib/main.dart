@@ -5,6 +5,9 @@ import 'classes/node.dart';
 import 'classes/node_editor_game.dart';
 import 'models/process_model.dart';
 
+
+String version = '0.1';
+
 void main() {
   runApp(NodeEditorApp());
 }
@@ -38,6 +41,8 @@ class _NodeEditorAppState extends State<NodeEditorApp> {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
+      debugShowCheckedModeBanner: false,
+      title: 'Process Editor v $version',
       home: Column(
         children: [
           // Custom Row acting as a toolbar, wrapped with Material

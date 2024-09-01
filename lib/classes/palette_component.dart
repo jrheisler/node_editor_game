@@ -18,33 +18,31 @@ class PaletteComponent extends PositionComponent {
   void render(Canvas canvas) {
     super.render(canvas);
 
-    // Define the padding and spacing
     const double padding = 20.0;
     const double shapeSize = 50.0;
-    const double arrowSize = 80.0; // Increased size for the arrows
+    const double arrowSize = 80.0;
+    const double buttonHeight = 40.0;
+    const double buttonWidth = 80.0;
+    const double buttonPadding = 10.0;
+    const double gridSquareSize = 50.0; // Assuming grid square size is 50.0
     final Paint faintLinePaint = Paint()
       ..color = const Color(0xFFCCCCCC)
       ..strokeWidth = 2.0;
 
-    // Draw the separating line to define the palette area
-    canvas.drawLine(const Offset(100, 0), Offset(100, size.y), faintLinePaint);
+    canvas.drawLine(Offset(100, 0), Offset(100, size.y), faintLinePaint);
 
-    // Calculate positions for each node
     final double startY = padding;
     final double processY = startY + shapeSize + padding;
     final double decisionY = processY + shapeSize + padding;
     final double stopY = decisionY + shapeSize + padding;
     final double arrowY = stopY + shapeSize + padding;
 
-    // Start Node: Green Circle
     final startPaint = Paint()..color = const Color(0xFF4CAF50);
     canvas.drawCircle(Offset(50, startY + shapeSize / 2), shapeSize / 2, startPaint);
 
-    // Process Node: Blue Square
     final processPaint = Paint()..color = const Color(0xFF2196F3);
     canvas.drawRect(Rect.fromLTWH(25, processY, shapeSize, shapeSize), processPaint);
 
-    // Decision Node: Yellow Diamond
     final decisionPaint = Paint()..color = const Color(0xFFFFEB3B);
     Path diamondPath = Path();
     diamondPath.moveTo(50, decisionY);
@@ -54,7 +52,6 @@ class PaletteComponent extends PositionComponent {
     diamondPath.close();
     canvas.drawPath(diamondPath, decisionPaint);
 
-    // Stop Node: Red Circle
     final stopPaint = Paint()..color = const Color(0xFFF44336);
     canvas.drawCircle(Offset(50, stopY + shapeSize / 2), shapeSize / 2, stopPaint);
 
@@ -62,48 +59,64 @@ class PaletteComponent extends PositionComponent {
     final arrowPaint = Paint()
       ..color = selectedArrowType == 'pass_arrow' ? Colors.green.withOpacity(0.6) : Colors.green;
     Path arrowPath = Path();
-    arrowPath.moveTo(20, arrowY + arrowSize / 2); // Start point of the arrow
-    arrowPath.lineTo(20 + arrowSize, arrowY + arrowSize / 2); // Main arrow line
-    arrowPath.lineTo(20 + arrowSize - 20, arrowY + arrowSize / 2 - 10); // Top arrowhead
-    arrowPath.moveTo(20 + arrowSize, arrowY + arrowSize / 2); // Move back to the tip
-    arrowPath.lineTo(20 + arrowSize - 20, arrowY + arrowSize / 2 + 10); // Bottom arrowhead
+    arrowPath.moveTo(20, arrowY + arrowSize / 2);
+    arrowPath.lineTo(20 + arrowSize, arrowY + arrowSize / 2);
+    arrowPath.lineTo(20 + arrowSize - 20, arrowY + arrowSize / 2 - 10);
+    arrowPath.moveTo(20 + arrowSize, arrowY + arrowSize / 2);
+    arrowPath.lineTo(20 + arrowSize - 20, arrowY + arrowSize / 2 + 10);
     canvas.drawPath(arrowPath, arrowPaint);
 
-    // Fail Arrow: Red Arrow
+    // Fail Arrow: Red Arrow (Adjusted Y-Position)
     final failArrowPaint = Paint()
       ..color = selectedArrowType == 'fail_arrow' ? Colors.red.withOpacity(0.6) : Colors.red;
     Path failArrowPath = Path();
-    failArrowPath.moveTo(20, arrowY + arrowSize + padding + arrowSize / 2); // Start point of the arrow
-    failArrowPath.lineTo(20 + arrowSize, arrowY + arrowSize + padding + arrowSize / 2); // Main arrow line
-    failArrowPath.lineTo(20 + arrowSize - 20, arrowY + arrowSize + padding + arrowSize / 2 - 10); // Top arrowhead
-    failArrowPath.moveTo(20 + arrowSize, arrowY + arrowSize + padding + arrowSize / 2); // Move back to the tip
-    failArrowPath.lineTo(20 + arrowSize - 20, arrowY + arrowSize + padding + arrowSize / 2 + 10); // Bottom arrowhead
+    final double adjustedArrowY = arrowY - gridSquareSize; // Adjust Y-position by grid square size
+    failArrowPath.moveTo(20, adjustedArrowY + arrowSize + arrowSize / 2);
+    failArrowPath.lineTo(20 + arrowSize, adjustedArrowY + arrowSize + arrowSize / 2);
+    failArrowPath.lineTo(20 + arrowSize - 20, adjustedArrowY + arrowSize + arrowSize / 2 - 10);
+    failArrowPath.moveTo(20 + arrowSize, adjustedArrowY + arrowSize + arrowSize / 2);
+    failArrowPath.lineTo(20 + arrowSize - 20, adjustedArrowY + arrowSize + arrowSize / 2 + 10);
     canvas.drawPath(failArrowPath, failArrowPaint);
-    // Render Export and Import buttons
+
+    // Render Export button
+    final exportButtonPaint = Paint()..color = Colors.blueAccent;
+    final Rect exportButtonRect = Rect.fromLTWH(
+        10, arrowY + arrowSize + 2 * padding + buttonHeight, buttonWidth, buttonHeight);
+    canvas.drawRRect(RRect.fromRectAndRadius(exportButtonRect, Radius.circular(10)), exportButtonPaint);
+
     TextPainter textPainter = TextPainter(
-      text: const TextSpan(
+      text: TextSpan(
         text: 'Export',
-        style: TextStyle(color: Color(0xFFCCCCCC), fontSize: 16),
+        style: TextStyle(color: Colors.white, fontSize: 16),
       ),
       textDirection: TextDirection.ltr,
     );
     textPainter.layout();
-    textPainter.paint(canvas, Offset(25, arrowY + arrowSize + 2 * padding));
+    textPainter.paint(canvas, Offset(exportButtonRect.left + 15, exportButtonRect.top + 8));
 
-    textPainter.text = const TextSpan(
+    // Render Import button
+    final importButtonPaint = Paint()..color = Colors.blueAccent;
+    final Rect importButtonRect = Rect.fromLTWH(
+        10, arrowY + arrowSize + 2 * padding + 2 * buttonHeight + buttonPadding, buttonWidth, buttonHeight);
+    canvas.drawRRect(RRect.fromRectAndRadius(importButtonRect, Radius.circular(10)), importButtonPaint);
+
+    textPainter.text = TextSpan(
       text: 'Import',
-      style: TextStyle(color: Color(0xFFCCCCCC), fontSize: 16),
+      style: TextStyle(color: Colors.white, fontSize: 16),
     );
     textPainter.layout();
-    textPainter.paint(canvas, Offset(25, arrowY + arrowSize + 3 * padding));
+    textPainter.paint(canvas, Offset(importButtonRect.left + 15, importButtonRect.top + 8));
   }
 
   bool handleTap(Offset position) {
     const double padding = 20.0;
     const double shapeSize = 50.0;
     const double arrowSize = 80.0;
+    const double buttonHeight = 40.0;
+    const double buttonWidth = 80.0;
+    const double buttonPadding = 10.0;
+    const double gridSquareSize = 50.0; // Assuming grid square size is 50.0
 
-    // Adjust for the toolbar height
     final adjustedPosition = Offset(position.dx, position.dy - 40);
 
     final double startY = padding;
@@ -111,8 +124,8 @@ class PaletteComponent extends PositionComponent {
     final double decisionY = processY + shapeSize + padding;
     final double stopY = decisionY + shapeSize + padding;
     final double arrowY = stopY + shapeSize + padding;
+    final double adjustedArrowY = arrowY - gridSquareSize;
 
-    // Detect taps on each shape and trigger node creation or arrow drawing
     if ((adjustedPosition - Offset(50, startY + shapeSize / 2)).distance < shapeSize / 2) {
       onNodeSelected('start', adjustedPosition);
       return true;
@@ -129,18 +142,17 @@ class PaletteComponent extends PositionComponent {
       selectedArrowType = 'pass_arrow';
       onNodeSelected('pass_arrow', adjustedPosition);
       return true;
-    } else if (Rect.fromLTWH(20, arrowY + arrowSize + padding + arrowSize / 2 - 10, arrowSize, 20).contains(adjustedPosition)) {
+    } else if (Rect.fromLTWH(20, adjustedArrowY + arrowSize + arrowSize / 2 - 10, arrowSize, 20).contains(adjustedPosition)) {
       selectedArrowType = 'fail_arrow';
       onNodeSelected('fail_arrow', adjustedPosition);
       return true;
-    } else if (Rect.fromLTWH(25, arrowY + arrowSize + 2 * padding, 50, 20).contains(adjustedPosition)) {
+    } else if (Rect.fromLTWH(10, arrowY + arrowSize + 2 * padding + buttonHeight, buttonWidth, buttonHeight).contains(adjustedPosition)) {
       onExport();
       return true;
-    } else if (Rect.fromLTWH(25, arrowY + arrowSize + 3 * padding, 50, 20).contains(adjustedPosition)) {
+    } else if (Rect.fromLTWH(10, arrowY + arrowSize + 2 * padding + 2 * buttonHeight + buttonPadding, buttonWidth, buttonHeight).contains(adjustedPosition)) {
       onImport();
       return true;
     }
-
     return false;
   }
 
