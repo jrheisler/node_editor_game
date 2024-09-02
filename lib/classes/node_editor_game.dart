@@ -137,14 +137,14 @@ class NodeEditorGame extends FlameGame {
     }
   }
 
-  // Example function to update the canvas
+ /* // Example function to update the canvas
   void updateCanvas() {
     // Force a full update in the next game loop
     for (final component in children) {
       component.removeFromParent();
       add(component);
     }
-  }
+  }*/
 
   @override
   Future<void> onLoad() async {
@@ -281,7 +281,7 @@ class NodeEditorGame extends FlameGame {
     }
   }
 
-  void cancelArrowDrawing() {
+  /*void cancelArrowDrawing() {
     if (draggingArrow != null) {
       remove(draggingArrow!);
       draggingArrow = null;
@@ -289,7 +289,7 @@ class NodeEditorGame extends FlameGame {
       palette.updateSelectedArrowType(null); // Reset palette highlight
       print("Arrow drawing canceled.");
     }
-  }
+  }*/
 
   SimpleNode? findNodeAt(Vector2 position) {
     for (final component in children) {
