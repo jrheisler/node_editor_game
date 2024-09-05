@@ -138,7 +138,7 @@ class PaletteComponent extends PositionComponent {
     } else if ((adjustedPosition - Offset(50, stopY + shapeSize / 2)).distance < shapeSize / 2) {
       onNodeSelected('stop', adjustedPosition);
       return true;
-    } else if (Rect.fromLTWH(20, arrowY + arrowSize / 2 - 10, arrowSize, 20).contains(adjustedPosition)) {
+    } else if (Rect.fromLTWH(20, arrowY + arrowSize / 2 - 10, arrowSize, 40).contains(adjustedPosition)) {
       selectedArrowType = 'pass_arrow';
       onNodeSelected('pass_arrow', adjustedPosition);
       return true;

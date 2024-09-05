@@ -35,7 +35,7 @@ class ProcessData {
   String? status;
   String? parentId;
   String? processStep;
-  List<dynamic>? addOns = [];
+  List<AddOns> addOns = [AddOns()];
   num? usedOnCount;
   String? rev;
   String? ver;
@@ -111,7 +111,7 @@ class ProcessData {
     this.status,
     this.parentId,
     this.processStep,
-    this.addOns,
+    required this.addOns,
     this.usedOnCount,
     this.rev,
     this.ver,

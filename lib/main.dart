@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'classes/node_editor_app.dart';
 
-String version = '0.1';
+String version = '0.5';
 
 void main() {
   runApp(MyApp());

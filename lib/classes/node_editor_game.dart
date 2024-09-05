@@ -1,5 +1,6 @@
 import 'dart:html' as html;
 import 'dart:convert';
+import 'package:flame/events.dart';
 import 'package:flame/game.dart';
 import 'package:flutter/material.dart';
 import 'package:flame/components.dart';
@@ -10,6 +11,8 @@ import '../services/download_file.dart';
 import 'node.dart';
 import 'arrow_component.dart';
 import 'palette_component.dart';
+import 'package:flame/components.dart';  // For CameraComponent and other game components
+import 'package:flame/events.dart';  // For DragStartInfo, DragUpdateInfo, etc.
 
 class NodeEditorGame extends FlameGame {
   SimpleNode? selectedNode;
@@ -148,6 +151,11 @@ class NodeEditorGame extends FlameGame {
 
   @override
   Future<void> onLoad() async {
+    super.onLoad();
+    // Set a larger world size so that the camera can move
+
+
+    // Add nodes or other elements to the game world here
     palette = PaletteComponent(
       onNodeSelected: (String type, Offset position) {
         if (type.contains("arrow")) {

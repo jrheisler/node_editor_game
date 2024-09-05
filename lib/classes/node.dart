@@ -24,6 +24,7 @@ class SimpleNode extends PositionComponent {
     print('SimpleNode created at position: $position with size: $size and shape: $shape');
   }
 
+
   @override
   void render(Canvas canvas) {
     super.render(canvas);
